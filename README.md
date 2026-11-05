@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Task Manager
 
-## Getting Started
+Simple task manager built with Next.js 15 (App Router) and tRPC. Tasks are kept in memory on the server, so they reset when the server restarts. All sample data is fictitious.
 
-First, run the development server:
+## Running
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The app starts with 25 sample tasks so the infinite scroll has something to load.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Next.js 15 (pinned to 15.x since the challenge asks for v15)
+- tRPC v11 with the TanStack React Query integration
+- Zod for input validation
+- superjson, so `createdAt` arrives on the client as a `Date`
+- Tailwind CSS
 
-## Learn More
+## How it works
 
-To learn more about Next.js, take a look at the following resources:
+- `src/server`: in-memory store and the tRPC router (`task.list`, `byId`, `create`, `update`, `delete`), exposed at `/api/trpc`.
+- The list page (`src/app/page.tsx`) uses SSR: it calls the router directly on the server, prefetches the first page and the client hydrates from it.
+- Create and edit share one form component. The title is validated on the client for quick feedback and again on the server with Zod.
+- Missing tasks return `NOT_FOUND`, invalid input returns `BAD_REQUEST` with the field message.
+- Infinite scroll uses cursor pagination (cursor = `createdAt` of the last item) with `useInfiniteQuery` and an `IntersectionObserver`. A cursor is used instead of an offset so deleting tasks while scrolling doesn't skip items.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Field names are in English: `titulo` is `title`, `descricao` is `description` and `dataCriacao` is `createdAt`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Limitations
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+No database and no auth. In-memory state also only works with a single server instance; a real deployment would need a database.
