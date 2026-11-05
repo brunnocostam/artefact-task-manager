@@ -19,7 +19,7 @@ export function FlashMessage({ flash, onDismiss }: { flash: Flash | null; onDism
       : "border-red-300 bg-red-50 text-red-800";
 
   return (
-    <div role="status" className={`mb-4 flex items-start justify-between gap-4 rounded border px-4 py-3 text-sm ${styles}`}>
+    <div role={flash.type === "error" ? "alert" : "status"} className={`mb-4 flex items-start justify-between gap-4 rounded border px-4 py-3 text-sm ${styles}`}>
       <span>{flash.text}</span>
       <button type="button" onClick={onDismiss} aria-label="Dismiss message" className="font-bold">
         ×

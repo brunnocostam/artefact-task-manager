@@ -31,7 +31,8 @@ export default async function HomePage({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <h1 className="mb-4 text-2xl font-bold">Tasks</h1>
-      <TaskList initialFlash={status ? FLASH_MESSAGES[status] : undefined} />
+      {/* hasOwn: "?status=constructor" would otherwise read Object.prototype */}
+      <TaskList initialFlash={status && Object.hasOwn(FLASH_MESSAGES, status) ? FLASH_MESSAGES[status] : undefined} />
     </HydrationBoundary>
   );
 }

@@ -9,7 +9,12 @@ import { PAGE_SIZE } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import { useTRPC } from "@/trpc/client";
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
+// fixed time zone: server and browser must render the same string, or hydration fails
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
 
 export function TaskList({ initialFlash }: { initialFlash?: string }) {
   const trpc = useTRPC();
@@ -33,11 +38,10 @@ export function TaskList({ initialFlash }: { initialFlash?: string }) {
 
   const deleteTask = useMutation(
     trpc.task.delete.mutationOptions({
-      onSuccess: async () => {
-        setFlash({ type: "success", text: "Task deleted successfully." });
-        await queryClient.invalidateQueries({ queryKey: trpc.task.list.pathKey() });
-      },
+      onSuccess: () => setFlash({ type: "success", text: "Task deleted successfully." }),
       onError: (error) => setFlash({ type: "error", text: getErrorMessage(error) }),
+      // refetch on error too: the task may have been deleted somewhere else
+      onSettled: () => queryClient.invalidateQueries({ queryKey: trpc.task.list.pathKey() }),
     }),
   );
 
@@ -101,17 +105,25 @@ export function TaskList({ initialFlash }: { initialFlash?: string }) {
                       <p className="mt-1 text-sm whitespace-pre-line text-gray-600">{task.description}</p>
                     )}
                     <p className="mt-2 text-xs text-gray-400">
-                      Created {dateFormatter.format(task.createdAt)}
+                      Created{" "}
+                      <time dateTime={task.createdAt.toISOString()}>
+                        {dateFormatter.format(task.createdAt)} UTC
+                      </time>
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2 text-sm">
-                    <Link href={`/tasks/${task.id}/edit`} className="rounded border px-2 py-1 hover:bg-gray-50">
+                    <Link
+                      href={`/tasks/${task.id}/edit`}
+                      aria-label={`Edit "${task.title}"`}
+                      className="rounded border px-2 py-1 hover:bg-gray-50"
+                    >
                       Edit
                     </Link>
                     <button
                       type="button"
                       onClick={() => deleteTask.mutate({ id: task.id })}
                       disabled={isDeleting}
+                      aria-label={`Delete "${task.title}"`}
                       className="rounded border border-red-300 px-2 py-1 text-red-700 hover:bg-red-50 disabled:cursor-not-allowed"
                     >
                       {isDeleting ? "Deleting…" : "Delete"}

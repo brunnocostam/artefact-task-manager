@@ -1,19 +1,21 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { DESCRIPTION_MAX, PAGE_SIZE, TITLE_MAX } from "@/lib/constants";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { createTask, deleteTask, getTask, listTasks, updateTask } from "../store";
 
 export const taskInputSchema = z.object({
+  // trim before min(1), so a title with only spaces is rejected too
   title: z
     .string()
     .trim()
     .min(1, "Title is required")
-    .max(120, "Title must be at most 120 characters"),
+    .max(TITLE_MAX, `Title must be at most ${TITLE_MAX} characters`),
   description: z
     .string()
     .trim()
-    .max(1000, "Description must be at most 1000 characters")
+    .max(DESCRIPTION_MAX, `Description must be at most ${DESCRIPTION_MAX} characters`)
     .optional(),
 });
 
@@ -27,7 +29,7 @@ export const taskRouter = createTRPCRouter({
   list: publicProcedure
     .input(
       z.object({
-        limit: z.number().int().min(1).max(50).default(10),
+        limit: z.number().int().min(1).max(50).default(PAGE_SIZE),
         cursor: z.number().nullish(),
       }),
     )
@@ -43,6 +45,7 @@ export const taskRouter = createTRPCRouter({
     .input(taskInputSchema)
     .mutation(({ input }) => createTask(input)),
 
+  // full update: title and description are both replaced
   update: publicProcedure
     .input(taskIdSchema.extend(taskInputSchema.shape))
     .mutation(({ input }) => {

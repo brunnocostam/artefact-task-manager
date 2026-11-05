@@ -5,15 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { DESCRIPTION_MAX, TITLE_MAX } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import { useTRPC } from "@/trpc/client";
 
 type TaskFormProps =
   | { mode: "create" }
   | { mode: "edit"; task: { id: string; title: string; description?: string } };
-
-const TITLE_MAX = 120;
-const DESCRIPTION_MAX = 1000;
 
 export function TaskForm(props: TaskFormProps) {
   const trpc = useTRPC();
